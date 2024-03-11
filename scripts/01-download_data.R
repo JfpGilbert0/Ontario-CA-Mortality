@@ -9,18 +9,15 @@
 
 
 #### Workspace setup ####
-library(opendatatoronto)
 library(tidyverse)
-# [...UPDATE THIS...]
-
+library(arrow)
+library(downloader)
 #### Download data ####
-# [...ADD CODE HERE TO DOWNLOAD...]
-
-
+download(url="https://www150.statcan.gc.ca/n1/tbl/csv/13100394-eng.zip", dest="data/raw_data/dataset.zip", mode="wb") 
+unzip("data/raw_data/dataset.zip", exdir = "data/raw_data/")
+file.remove("data/raw_data/dataset.zip")
+raw_data <- read_csv("data/raw_data/13100394.csv")
 
 #### Save data ####
-# [...UPDATE THIS...]
-# change the_raw_data to whatever name you assigned when you downloaded it.
-write_csv(the_raw_data, "inputs/data/raw_data.csv") 
-
-         
+# saves raw data as a parquet
+write_parquet(x = raw_data, sink = "data/raw_data/raw_mortality_data.parquet")
