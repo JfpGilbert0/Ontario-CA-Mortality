@@ -1,16 +1,15 @@
 #### Preamble ####
-# Purpose: Cleans the raw plane data recorded by two observers..... [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 6 April 2023 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
+# Purpose: Clean the names and select columns of interest from the raw data.
+# Author: Jacob Gilbert and Liam Wall
+# Date: today
+# Contact: liam.wall@mail.utoronto.ca, jacob.gilbert@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
 
 #### Workspace setup ####
 library(tidyverse)
 library(janitor)
 library(dplyr)
+
 #### Clean data ####
 raw_data <- read_parquet("data/raw_data/raw_mortality_data.parquet")
 head(cleaned_data)
