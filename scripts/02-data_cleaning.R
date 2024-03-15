@@ -1,7 +1,7 @@
 #### Preamble ####
 # Purpose: Clean the names and select columns of interest from the raw data.
 # Author: Jacob Gilbert and Liam Wall
-# Date: today
+# Date: 2024-03-15
 # Contact: liam.wall@mail.utoronto.ca, jacob.gilbert@mail.utoronto.ca
 # License: MIT
 
@@ -52,4 +52,6 @@ joint_data <-
   left_join(by_cause, total_only, by = "year", relationship = "many-to-many")
 
 #### Save data ####
+# write_csv(x = cleaned_data, file = "data/analysis_data/cleaned_data.csv")
 
+# write_csv(x = joint_data, file = "data/analysis_data/joint_data.csv")

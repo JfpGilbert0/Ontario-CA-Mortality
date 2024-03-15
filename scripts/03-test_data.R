@@ -1,7 +1,7 @@
 #### Preamble ####
 # Purpose: Tests many aspects of the final cleaned data sets.
 # Author: Jacob Gilbert and Liam Wall
-# Date: today
+# Date: 2024-03-15
 # Contact: liam.wall@mail.utoronto.ca, jacob.gilbert@mail.utoronto.ca
 # License: MIT
 
@@ -24,116 +24,6 @@ test_that("Testing 'year_rank' has only values 1-10.", {
   
   
 })
-
-
-
-types_of_age <- cleaned_data |>
-  count(age)
-
-count_of_years <- cleaned_data |>
-  count(year)
-
-count_of_causes <- cleaned_data |>
-  count(cause)
-
-cleaned_data |>
-  count(characteristics)
-
-covid_data <- cleaned_data |>
-  select(year, age, sex, cause, characteristics, value) |>
-  filter(year > 2016, 
-         cause == "COVID-19 [U07.1, U07.2, U10.9]",
-         characteristics == "Rank of leading causes of death" | characteristics == "Number of deaths",
-         age == "Age at time of death, all ages"
-         )
-
-rank_data <- cleaned_data |>
-  select(year, age, sex, cause, characteristics, value) |>
-  filter(characteristics == "Rank of leading causes of death",
-         age == "Age at time of death, all ages",
-         sex == "Both sexes",
-         value > 0)
-
-rank_data |>
-  filter(value < 11) |>
-  ggplot(aes(x = year, y = value)) +
-  geom_point(aes(color = cause)) +
-  theme(legend.position = "none")
-
-death_data <- cleaned_data |>
-  select(year, age, sex, cause, characteristics, value) |>
-  filter(characteristics == "Number of deaths",
-         age == "Age at time of death, all ages",
-         sex == "Both sexes",
-         cause != "Total, all causes of death [A00-Y89]")
-
-death_data |>
-  ggplot(aes(x = year, y = value)) +
-  geom_point(aes(color = cause)) +
-  theme(legend.position = "none")
-
-#Total annual death data for both sexes and all causes
-total_yearly_death_data <- cleaned_data |>
-  filter(characteristics == "Number of deaths",
-         cause == "Total, all causes of death [A00-Y89]",
-         age == "Age at time of death, all ages",
-         sex == "Both sexes") |>
-  mutate(number_of_deaths = value) |>
-  select(year, age, sex, cause, number_of_deaths) |>
-  ggplot(aes(x = year, y = number_of_deaths)) +
-  geom_point()
-
-cleaned_data |>
-  filter(characteristics == "Number of deaths",
-         cause != "Total, all causes of death [A00-Y89]",
-         age == "Age at time of death, all ages",
-         sex == "Both sexes") |>
-  mutate(number_of_deaths = value) |>
-  select(year, age, sex, cause, number_of_deaths) |>
-  count(year) |> arrange(-n)
-
-cleaned_data |>
-  filter(characteristics == "Rank of leading causes of death",
-         cause != "Total, all causes of death [A00-Y89]",
-         age == "Age at time of death, all ages",
-         sex == "Both sexes") |>
-  mutate(rank = value) |>
-  select(year, age, sex, cause, rank)
-
-
-#rank as a column, 99,605 rows
-cleaned_data |>
-  filter(characteristics == "Rank of leading causes of death") |>
-  mutate(rank = value) |>
-  select(year, age, sex, cause, rank)
-
-
-joint_data |>
-  ggplot(aes(x = year, y = value)) +
-  geom_point(aes(color = cause), alpha = 0.5) +
-  theme(legend.position = "bottom") +
-  geom_smooth(aes(color = cause), method = "glm", formula = "y ~ x") +
-  geom_smooth(
-    method = "lm",
-    formula = "y ~ x",
-    color = "black"
-  ) +
-  theme_minimal() +
-  scale_color_brewer(palette = "Set1")  +
-  theme(legend.position = "bottom")
-
-cause_of_death_ontario_neg_binomial <-
-  stan_glm(
-    value ~ cause,
-    data = joint_data,
-    family = neg_binomial_2(link = "log"),
-    seed = 853
-  )
-
-joint_data |>
-  filter(str_detect(cause, "COVID"))
-
-summary(cause_of_death_ontario_neg_binomial)
 
 
 # Test 1: Validate 'year' column

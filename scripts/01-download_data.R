@@ -1,7 +1,7 @@
 #### Preamble ####
 # Purpose: Download the raw data set from statcan.gc.ca and save it locally
 # Author: Jacob Gilbert and Liam Wall
-# Date: today
+# Date: 2024-03-15
 # Contact: liam.wall@mail.utoronto.ca, jacob.gilbert@mail.utoronto.ca
 # License: MIT
 

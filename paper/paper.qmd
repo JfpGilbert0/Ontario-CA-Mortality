@@ -2,9 +2,9 @@
 title: "My title"
 subtitle: "My subtitle if needed"
 author: 
-  - First author
-  - Another author
-thanks: "Code and data are available at: LINK."
+  - Jacob Gilbert
+  - Liam Wall
+thanks: "Code and data are available at: https://github.com/JfpGilbert0/Ontario-CA-Mortality."
 date: today
 date-format: long
 abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
@@ -30,6 +30,66 @@ library(rstanarm)
 
 # Data
 
+```{r}
+#| label: fig-all_values
+#| fig-cap: "Visual of each value in the dataset, the number of deaths per year per cause. Each color corresponds to a cause"
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+
+cleaned_data <- read_csv("/Users/liamwall/Ontario-CA-Mortality/data/analysis_data/cleaned_data.csv")
+joint_data <- read_csv(("/Users/liamwall/Ontario-CA-Mortality/data/analysis_data/joint_data.csv"))
+
+cleaned_data |>
+  filter(characteristics == "Number of deaths",
+         cause != "Total, all causes of death [A00-Y89]",
+         age == "Age at time of death, all ages",
+         sex == "Both sexes") |>
+  mutate(number_of_deaths = value) |>
+  select(year, age, sex, cause, number_of_deaths) |>
+  ggplot(aes(x = year, y = number_of_deaths)) +
+  geom_point(aes(color = cause), alpha = 0.5) +
+  theme(legend.position = "none") +
+  labs(x = "Year", y = "Total Deaths", title = "Top 43 Causes of Death in Ontario")
+
+joint_data |>
+  ggplot(aes(x = year, y = value)) +
+  geom_point(aes(color = cause), alpha = 0.5) +
+  theme(legend.position = "bottom") +
+  labs(x = "Year", y = "Total Deaths", title = "Top 10 Causes of Death in Ontario")
+
+```
+
+
+```{r}
+#| label: fig-top_three_bottom_seven
+#| fig-cap: "Visual of the trends in top three causes versus the bottom seven."
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| layout-ncol: 2
+
+joint_data |>
+  filter(year_rank < 4) |>
+  ggplot(aes(x = year, y = value)) +
+  geom_point(aes(color = cause), alpha = 0.5) +
+  theme(legend.position = "bottom") +
+  labs(x = "Year", y = "Total Deaths", title = "Top Three Causes of Death in Ontario")
+
+joint_data |>
+  filter(year_rank > 3) |>
+  ggplot(aes(x = year, y = value)) +
+  geom_point(aes(color = cause), alpha = 0.5) +
+  theme(legend.position = "bottom") +
+  labs(x = "Year", y = "Total Deaths", title = "Top 10 to 7 Causes of Death in Ontario")
+
+
+
+```
+
+
 # Results
 
 ```{r}
@@ -40,7 +100,6 @@ library(rstanarm)
 #| message: false
 #| warning: false
 
-cleaned_data <- read_csv("/Users/liamwall/Ontario-CA-Mortality/data/analysis_data/cleaned_data.csv")
 
 #Total annual death data for both sexes and all causes
 total_yearly_death_data <- cleaned_data |>
@@ -51,7 +110,8 @@ total_yearly_death_data <- cleaned_data |>
   mutate(number_of_deaths = value) |>
   select(year, age, sex, cause, number_of_deaths) |>
   ggplot(aes(x = year, y = number_of_deaths)) +
-  geom_point()
+  geom_point() +
+  labs(x = "Year", y = "Total Deaths", title = "Annual Deaths in Ontario")
 
 
 total_yearly_death_data
@@ -64,6 +124,31 @@ total_yearly_death_data
 ## Additional data details
 
 ## Model details {#sec-model-details}
+
+```{r}
+#| label: fig-model-one
+#| fig-cap: "Model regressing total deaths based on year."
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| layout-ncol: 2
+
+# could also add a predictor which would be year or year_rank
+cause_of_death_ontario_neg_binomial <-
+  stan_glm(
+    value ~ cause,
+    data = joint_data,
+    family = neg_binomial_2(link = "log"),
+    seed = 853
+  )
+
+summary(cause_of_death_ontario_neg_binomial)
+
+pp_check(cause_of_death_ontario_neg_binomial)
+
+```
+
 
 ## Posterior predictive check
 
