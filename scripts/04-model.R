@@ -12,25 +12,36 @@
 library(tidyverse)
 library(rstanarm)
 library(modelsummary)
+library(shinystan)
 
 #### Read data ####
 analysis_data <- read_csv("data/analysis_data/analysis_data.csv")
 
-### Model data ####
-joint_data |>
+joint_data |> 
+  mutate(cause = str_remove(cause, "\\s*\\[.*\\]")) |>
   ggplot(aes(x = year, y = value)) +
-  geom_point(aes(color = cause), alpha = 0.5) +
-  theme(legend.position = "bottom") +
-  geom_smooth(aes(color = cause), method = "glm", formula = "y ~ x") +
-  geom_smooth(
-    method = "lm",
-    formula = "y ~ x",
-    color = "black"
-  ) +
+  geom_point(aes(color = cause), alpha = 0.8) +
   theme_minimal() +
-  scale_color_brewer(palette = "Set1")  +
   theme(legend.position = "bottom")
+#  facet_wrap(vars(cause), dir = "v", ncol = 3) +
 
+joint_data |>
+  mutate(cause = str_remove(cause, "\\s*\\[.*\\]")) |>
+  ggplot(aes(x = cause, y = value)) +
+  geom_point(aes(color = year), alpha = 0.6) +
+  theme_minimal() +
+  theme(legend.position = "bottom", axis.text.x = element_text(angle=90, hjust=1)) +
+  labs()
+
+joint_data |>
+  mutate(cause = str_remove(cause, "\\s*\\[.*\\]")) |>
+  summarise(avg_rank = mean(year_rank),
+            number_years_present = n(),
+            .by = cause) |>
+  arrange(avg_rank) |>
+  mutate()
+
+### Model data ####
 cause_of_death_ontario_neg_binomial <-
   stan_glm(
     value ~ cause,
@@ -41,21 +52,41 @@ cause_of_death_ontario_neg_binomial <-
 
 summary(cause_of_death_ontario_neg_binomial)
 
+# launch_shinystan(cause_of_death_ontario_neg_binomial)
+
 pp_check(cause_of_death_ontario_neg_binomial)
 
+loo_neg_binomial <- loo(cause_of_death_ontario_neg_binomial, cores = 2, k_threshold = 0.7)
 
+residuals_df <- data.frame(residuals = residuals(cause_of_death_ontario_neg_binomial))
+ggplot(residuals_df, aes(x = residuals)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  theme_minimal() +
+  labs(title = "Histogram of Residuals", x = "Residuals", y = "Count")
 
-rank_ontario_neg_binomial <-
+#Can compare to fitting this data with a Poisson distribution 
+cause_of_death_ontario_poisson <-
   stan_glm(
-    year_rank ~ value,
+    total_deaths ~ cause,
     data = joint_data,
-    family = neg_binomial_2(link = "log"),
+    family = poisson(link = "log"),
     seed = 853
   )
 
-pp_check(rank_ontario_neg_binomial)
+summary(cause_of_death_ontario_poisson)
 
-summary(rank_ontario_neg_binomial)
+pp_check(cause_of_death_ontario_poisson)
+
+loo_poisson <- kfold(cause_of_death_ontario_poisson, cores = 2, K = 10)
+
+loo_compare(loo_poisson, loo_neg_binomial)
+
+residuals_df <- data.frame(residuals = residuals(cause_of_death_ontario_poisson))
+ggplot(residuals_df, aes(x = residuals)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  theme_minimal() +
+  labs(title = "Histogram of Residuals", x = "Residuals", y = "Count")
+
 
 #### Save model ####
 # saveRDS(first_model, file = "models/first_model.rds")
