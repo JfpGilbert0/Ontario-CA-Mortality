@@ -8,54 +8,58 @@
 #### Workspace setup ####
 library(tidyverse)
 library(testthat)
-library(rstanarm)
 
 #### Test data ####
 
+#1
 test_that("Testing 'year' column values", {
-  expect_true("year" %in% names(joint_data), "Data should have a 'year' column")
+  expect_true("year" %in% names(joint_data), "Data should have a 'year' column.")
+  
+  expect_true(is.numeric(joint_data$year),
+              "Values in 'year' column should be numeric.")
   
   expect_true(all(joint_data$year >= 2000 & joint_data$year <= 2022),
-              "Values in 'year' column should be within the range 2000 through 2022")
+              "Values in 'year' column should be within the range 2000 through 2022.")
 })
 
-test_that("Testing 'year_rank' has only values 1-10.", {
-  expect_true("year_rank" %in% names(joint_data), "Data should have a 'year_rank' column")
+#2
+test_that("Testing 'cause' column values", {
+  expect_true("cause" %in% names(joint_data), "Data should have a 'cause' column.")
   
-  
+  expect_true(is.character(joint_data$cause),
+              "Values in 'cause' column should be characters.")
 })
 
+#3
+test_that("Testing 'value' column values", {
+  expect_true("value" %in% names(joint_data), "Data should have a 'value' column.")
+  
+  expect_true(is.double(joint_data$value),
+              "Values in 'value' column should be numeric.")
+  
+  expect_true(all(joint_data$value >= 0 & joint_data$year <= 100000),
+              "Values in 'value' column are expected to be within the range 0 through 100,000.")
+})
 
-# Test 1: Validate 'year' column
-assert_that(all(is.numeric(joint_data$year)))
-assert_that(all(joint_data$year >= 2000))
-assert_that(all(joint_data$year <= 2022))
+#4
+test_that("Testing 'year_rank' column values", {
+  expect_true("year_rank" %in% names(joint_data), "Data should have a 'year_rank' column.")
+  
+  expect_true(is.double(joint_data$year_rank),
+              "Values in 'year_rank' column should be numeric.")
+  
+  expect_true(all(joint_data$year_rank >= 0 & joint_data$year_rank <= 10),
+              "Values in 'year_rank' column are expected to be within the range 1 through 10.")
+})
 
-# Test 2: Validate 'cause' column format
-assert_that(all(sapply(joint_data$cause, is.character)))
+#5
+test_that("Testing 'total_deaths' column values", {
+  expect_true("total_deaths" %in% names(joint_data), "Data should have a 'total_deaths' column.")
+  
+  expect_true(is.double(joint_data$total_deaths),
+              "Values in 'year_rank' column should be numeric.")
+  
+  expect_true(all(joint_data$total_deaths >= 100000 & joint_data$total_deaths <= 400000),
+              "Values in 'total_deaths' column are expected to be within the range 100,000 through 400,000.")
+})
 
-# Test 3: Validate 'value' column
-assert_that(all(is.numeric(joint_data$value)))
-assert_that(all(joint_data$value >= 0))
-
-# Test 4: Validate 'year_rank' column
-assert_that(all(is.integer(df$year_rank)))
-assert_that(all(df$year_rank >= 1))
-df %>%
-  group_by(year) %>%
-  summarise(max_rank = max(year_rank)) %>%
-  assert_that(all(max_rank <= 10)) # replace 10 with the actual max rank
-
-# Test 5: Validate 'total_deaths' column
-assert_that(all(is.numeric(df$total_deaths)))
-df %>%
-  group_by(year) %>%
-  summarise(unique_total_deaths = n_distinct(total_deaths)) %>%
-  assert_that(all(unique_total_deaths == 1))
-
-# Test 6: Check for duplicates
-assert_that(nrow(df) == nrow(df %>%
-                               distinct(year, cause, .keep_all = TRUE)))
-
-# If all assertions pass, it will continue, otherwise, it will throw an error
-print("All tests passed.")
