@@ -89,6 +89,6 @@ ggplot(residuals_df, aes(x = residuals)) +
 
 
 #### Save model ####
-# saveRDS(first_model, file = "models/first_model.rds")
+saveRDS(cause_of_death_ontario_neg_binomial, file = "models/cod_ontario_neg_binomial.rds")
 
 
