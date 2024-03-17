@@ -96,7 +96,7 @@ joint_data |>
 The measurements recorded in the original data set are sourced from hospitals and clinics from around Ontario. The only inputted data to these data sets are the number of deaths per cause. These are annually updated statistics and originally inputted as either male or female statistics and in a certain age group. The resulting cumulative data of both sexes and all age groups is derived from this original data. As both sexes is simply the sum of male and female and all age groups is again the sum of all age groups. The mortality rate is also an annually updated statistics per cause and calculated based on information on the total number of contractions of a disease (not included in thsi data). The total number of deaths, rank of leading cause of death, and percentage of deaths per each cause and for the total of the year are calculated from the originally inputted male and female data for all ages.
 
 # Model
-The model used to simulate, analyse, and predict the next five years of mortality data for the top ten causes of death in Ontario was produced using the rstanarm package and the stan_glm function. Taking advice from @rohan in his book Telling Stories With Data, we set out to fit our data to a negative binomial distribution. [INSERT FORMULA FOR NEGATIVE BINOMIAL PMF]. We regressed total deaths for each cause against cause of death dependent on the year. We used the negative binomial distribution because our data has a variance far exceeding the mean. [@tbl-min-max]. We also specify a log link function because as we are dealing with number of deaths, any negative value as a result of the model will not be telling of the real world. In this way using the log link function the predictions are always positive.
+The model used to simulate, analyse, and predict the next five years of mortality data for the top ten causes of death in Ontario was produced using the rstanarm package and the stan_glm function. Taking advice from @rohan in his book Telling Stories With Data, we set out to fit our data to a negative binomial distribution. We regressed total deaths for each cause against cause of death dependent on the year. We used the negative binomial distribution because our data has a variance far exceeding the mean. [@tbl-min-max]. We also specify a log link function because as we are dealing with number of deaths, any negative value as a result of the model will not be telling of the real world. In this way using the log link function the predictions are always positive.
 
 ```{r}
 #| label: tbl-min-max
@@ -275,17 +275,6 @@ In conclusion, we produced a model to predict the leading causes of death over t
 ## More on the Model
 In this section I will show that we created two models, on ewith a negative binomial distribution and one with a poisson distribution. The negative binomial fits very well as can be seen in the posterior predictive and residuals graphs [@fig-model-two]. We also checked the robustness of the models by comparing them in a 'Leave-One-Out' test.
 
-```{r}
-#| label: fig-model-one
-#| fig-cap: "Summary of the negative binomal fitted model."
-#| eval: true
-#| echo: false
-#| message: false
-#| warning: false
-
-summary(cause_of_death_ontario_neg_binomial)
-```
-
 
 ```{r}
 #| label: fig-model-two
@@ -318,6 +307,7 @@ ggplot(residuals_df, aes(x = residuals)) +
   labs(title = "Histogram of Residuals", x = "Residuals", y = "Count")
 
 ```
+
 ```{r}
 #| label: fig-model-three
 #| fig-cap: "Posterior prediction check for the negative binomial (left) and poisson (right) models."
