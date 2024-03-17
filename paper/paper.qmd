@@ -18,7 +18,6 @@ bibliography: references.bib
 #| message: false
 
 library(tidyverse)
-library(palmerpenguins)
 library(arrow)
 library(downloader)
 library(rstanarm)
@@ -29,9 +28,10 @@ library(kableExtra)
 # Introduction
 In this paper, we attempt to analyze data on Ontario mortality from 2000 to 2022. In the analysis we create a model predicting the number of deaths per year for a certain cause. From this model we were able to create a prediction for the next five years of the top ten causes of death in Ontario and the corresponding predicted number of deaths. 
 
+The creation of this report was made possible by @citeR, @rohan, @tidyverse for data cleaning, @rstanarm for data modeling and posterior prediction checks, @testthat to test many aspects of the code used for the analysis, @kable for adjusting and displaying code, @downloader to download the data, and @statcan for making the data available.
 
 # Data
-The data is this paper was retrieved from [UPDATE WEBSITE]. The data set contains information on Ontario residents' mortality from 2000 to 2022. The data set lists information on the top 43 leading causes of death each year. It has values for rank of leading cause of death in Ontario, total number of deaths per cause, percentage of deaths pertaining to each cause compared to the yearly total, and age-specific mortality rate. It lists all this information for males, females, and both sexes combined individually as well as for each age group of around 5 years and a combined statistics for all ages. The data set also lists annual information like total deaths per cause per year and total deaths per year. For the purposes of our analysis we will only look at the top ten causes of death in Ontario per year [@fig-all_values].
+The data is this paper was retrieved from @statcan. The data set contains information on Ontario residents' mortality from 2000 to 2022. The data set lists information on the top 43 leading causes of death each year. It has values for rank of leading cause of death in Ontario, total number of deaths per cause, percentage of deaths pertaining to each cause compared to the yearly total, and age-specific mortality rate. It lists all this information for males, females, and both sexes combined individually as well as for each age group of around 5 years and a combined statistics for all ages. The data set also lists annual information like total deaths per cause per year and total deaths per year. For the purposes of our analysis we will only look at the top ten causes of death in Ontario per year [@fig-all_values].
 
 ```{r}
 #| label: fig-all_values
@@ -117,7 +117,7 @@ The model we built is very well fitting to a negative binomial distribution as s
 
 ```{r}
 #| label: fig-model-summary
-#| fig-cap: "Modeling the most prevalent cause of deaths in Ontario, 200-2022."
+#| fig-cap: "Modeling the most prevalent cause of deaths in Ontario, 2000 - 2022."
 #| eval: true
 #| echo: false
 #| message: false
@@ -215,7 +215,7 @@ combined_future_data |>
 
 # Discussion
 
-We can see in @fig-total_yearly_death the total deaths in Ontario have increased greatly, and in recent years has had a somewhat exponential increase. Our model continues this trend and we can see the deaths continue to rise in [INSERT FIG HERE FOR FUTURE TOTAL DEATHS], however, it seems that our model is mistaken in that in 2023 it predicts less than 290,000 deaths whereas in 2022 we observed over 330,000 deaths. Further, when we look at @fig-prediction, we see again see a similar extension by the model in a linear fashion. It predicts the death for each cause to increase in the next years, which is most likely accurate, however in a completely linear way. Naturally this is reflected in the total deaths and we begin to learn of some of the flaws of this model.
+We can see in @fig-total_yearly_death-1 the total deaths in Ontario have increased greatly, and in recent years has had a somewhat exponential increase. Our model continues this trend and we can see the deaths continue to rise in @fig-total_yearly_death-2, however, it seems that our model is mistaken in that in 2023 it predicts less than 290,000 deaths whereas in 2022 we observed over 330,000 deaths. Further, when we look at @fig-prediction, we see again see a similar extension by the model in a linear fashion. It predicts the death for each cause to increase in the next years, which is most likely accurate, however in a completely linear way. Naturally this is reflected in the total deaths and we begin to learn of some of the flaws of this model.
 
 ```{r}
 #| label: fig-total_yearly_death

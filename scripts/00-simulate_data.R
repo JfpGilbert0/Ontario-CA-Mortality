@@ -8,10 +8,15 @@
 
 #### Workspace setup ####
 library(tidyverse)
-# [...UPDATE THIS...]
 
 #### Simulate data ####
-# [...ADD CODE HERE...]
+ontario_death_simulation <-
+  tibble(
+    cause = rep(x = c("Heart", "Stroke", "Diabetes"), times = 10),
+    year = rep(x = 2016:2018, times = 10),
+    deaths = rnbinom(n = 30, size = 20, prob = 0.1)
+  )
 
+ontario_death_simulation
 
 

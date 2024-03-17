@@ -2,9 +2,7 @@
 
 ## Overview
 
-This repo provides students with a foundation for their own projects associated with *Telling Stories with Data*. You do not need every aspect for every paper and you should delete aspects that you do not need.
-
-To use this folder, click the green "Code" button", then "Download ZIP". Move the downloaded folder to where you want to work on your own computer, and then modify it to suit.
+This repo contains the paper and code to produce the paper on Ontario mortality from 2000 to 2022. We analyze Ontario mortality data and create a model in order to offer predictions on leading causes of death for the next five years. The model was built using R and rstanarm package and is saved on this repo.
 
 
 ## File Structure
@@ -21,4 +19,4 @@ The repo is structured as:
 
 ## Statement on LLM usage
 
-Aspects of the code were written with the help of the auto-complete tool, Codriver. The abstract and introduction were written with the help of ChatHorse and the entire chat history is available in inputs/llms/usage.txt.
+Aspects of this paper were completed with the help on ChatGPT-4. The entire conversation is in the 'other' -> 'llm usage' folder contained in a txt file. ChatGPT-4 was consulted for help with code cleaning and creating simple bits of code like a simulation data frame for example. The main use of ChatGPT-4 in this paper was for the use of understanding different aspects of the model I created. I created the model and fed ChatGPT-4 some information outputted and it helped me understand the parts of the model that were good and not-so-good.
