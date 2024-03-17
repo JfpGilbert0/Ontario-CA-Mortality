@@ -26,7 +26,7 @@ library(kableExtra)
 
 
 # Introduction
-In this paper, we attempt to analyze data on Ontario mortality from 2000 to 2022. In the analysis we create a model predicting the number of deaths per year for a certain cause. From this model we were able to create a prediction for the next five years of the top ten causes of death in Ontario and the corresponding predicted number of deaths. 
+In this paper, we attempt to analyze data on Ontario mortality from 2000 to 2022. In the analysis we create a model predicting the number of deaths per year for a certain cause. From this model we were able to create a prediction for the next five years of the top ten causes of death in Ontario and the corresponding predicted number of deaths. The top three leading causes of death from 2000 to 2022 are malignant neoplasms, diseases of the heart, and other causes of death not listed in the top 43 leading causes of death in Ontario. The model we create accurately reflects this data from 2000 to 2022 and does so to a high degree. The model, using posterior predicting, shows that the next five years will retain the same top three causes. In this paper we estimate that the top three leading causes of death will remain the top three causes, and the estimand is that a combination of the cause based on the year can predict the number of deaths in the near future.
 
 The creation of this report was made possible by @citeR, @rohan, @tidyverse for data cleaning, @rstanarm for data modeling and posterior prediction checks, @testthat to test many aspects of the code used for the analysis, @kable for adjusting and displaying code, @downloader to download the data, and @statcan for making the data available.
 
@@ -69,7 +69,7 @@ joint_data |>
 
 For this research we look at the data pertaining to both sexes and all age groups, which are the cumulative results from the individual information from male and female and from all the age groups combined. The purpose of this paper is not to define age specific or gender specific trends in the mortality of Ontario residents, but rather the overall trend of the leading causes of death and predictions for the future. In this way way we can use the combined data from these groups and still achieve meaningful results in our analysis [@tbl-header-1]. 
 
-The original data set from STAT.CANADA.CA contains 407,334 observations of 18 different variables. In our analysis, using the combined data of gender and age, we look at 230 observations of 5 variables: year, cause, total deaths per cause, yearly rank of leading cause of death, and total deaths that year. There are 230 observations for the top ten causes of death over 23 years, 2000 to 2022. In the 23 years, there has only been 13 different causes ranked as the top ten leading causes of death [@tbl-header-2]. The yearly deaths for each of the top ten causes range from 3,606 to 82,822. The annual deaths in Ontario from 2000 to 2022 range from 218,062 to 334081.
+The original data set from <https://www150.statcan.gc.ca/> contains 407,334 observations of 18 different variables. In our analysis, using the combined data of gender and age, we look at 230 observations of 5 variables: year, cause, total deaths per cause, yearly rank of leading cause of death, and total deaths that year. There are 230 observations for the top ten causes of death over 23 years, 2000 to 2022. In the 23 years, there has only been 13 different causes ranked as the top ten leading causes of death [@tbl-header-2]. The yearly deaths for each of the top ten causes range from 3,606 to 82,822. The annual deaths in Ontario from 2000 to 2022 range from 218,062 to 334081.
 
 ```{r}
 #| label: tbl-header
@@ -85,12 +85,18 @@ joint_data |>
   kable(col.names = c("Year", "Leading Cause of Death", "Deaths", "Rank", "Total Annual Deaths"))
 
 joint_data |>
-  mutate(cause = str_remove(cause, "\\s*\\[.*\\]")) |> 
-  count(cause) |> arrange(n) |> kable(col.names = c("Leading Causes of Death", n = "Fequency"))
+  mutate(cause = str_remove(cause, "\\s*\\[.*\\]")) |>
+  summarise(avg_rank = mean(year_rank),
+            number_years_present = n(),
+            .by = cause) |>
+  arrange(avg_rank) |> 
+  kable(col.names = c("Leading Causes of Death", "Average Rank", "Number of Years Present"))
 ```
 
+The measurements recorded in the original data set are sourced from hospitals and clinics from around Ontario. The only inputted data to these data sets are the number of deaths per cause. These are annually updated statistics and originally inputted as either male or female statistics and in a certain age group. The resulting cumulative data of both sexes and all age groups is derived from this original data. As both sexes is simply the sum of male and female and all age groups is again the sum of all age groups. The mortality rate is also an annually updated statistics per cause and calculated based on information on the total number of contractions of a disease (not included in thsi data). The total number of deaths, rank of leading cause of death, and percentage of deaths per each cause and for the total of the year are calculated from the originally inputted male and female data for all ages.
+
 # Model
-The model used to simulate, analyse, and predict the next five years of mortality data for the top ten causes of death in Ontario was produced using the rstanarm package and the stan_glm function. Taking advice from [INSERT ROHAN TEXTBOOK REFERENCE OF CHAPTER 13 ALBERTA DATA] we set out to fit our data to a negative binomial distribution. [INSERT FORMULA FOR NEGATIVE BINOMIAL PMF]. We regressed total deaths for each cause against cause of death dependent on the year. We used the negative binomial distribution because our data has a variance far exceeding the mean. [@tbl-min-max]. We also specify a log link function because as we are dealing with number of deaths, any negative value as a result of the model will not be telling of the real world. In this way using the log link function the predictions are always positive.
+The model used to simulate, analyse, and predict the next five years of mortality data for the top ten causes of death in Ontario was produced using the rstanarm package and the stan_glm function. Taking advice from @rohan in his book Telling Stories With Data, we set out to fit our data to a negative binomial distribution. [INSERT FORMULA FOR NEGATIVE BINOMIAL PMF]. We regressed total deaths for each cause against cause of death dependent on the year. We used the negative binomial distribution because our data has a variance far exceeding the mean. [@tbl-min-max]. We also specify a log link function because as we are dealing with number of deaths, any negative value as a result of the model will not be telling of the real world. In this way using the log link function the predictions are always positive.
 
 ```{r}
 #| label: tbl-min-max
@@ -207,7 +213,8 @@ combined_future_data |>
   ggplot(aes(x = year, y = value)) +
   geom_point(aes(color = cause), alpha = 0.8) +
   theme_minimal() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  labs(x = "Year", y = "Total Deaths")
 
 ```
 
@@ -215,7 +222,7 @@ combined_future_data |>
 
 # Discussion
 
-We can see in @fig-total_yearly_death-1 the total deaths in Ontario have increased greatly, and in recent years has had a somewhat exponential increase. Our model continues this trend and we can see the deaths continue to rise in @fig-total_yearly_death-2, however, it seems that our model is mistaken in that in 2023 it predicts less than 290,000 deaths whereas in 2022 we observed over 330,000 deaths. Further, when we look at @fig-prediction, we see again see a similar extension by the model in a linear fashion. It predicts the death for each cause to increase in the next years, which is most likely accurate, however in a completely linear way. Naturally this is reflected in the total deaths and we begin to learn of some of the flaws of this model.
+We can see in @fig-total_yearly_death-1 the total deaths in Ontario have increased greatly, and in recent years has had a somewhat exponential increase. Our model continues this trend and we can see the deaths continue to rise in @fig-total_yearly_death-2, however, it seems that our model is mistaken in that in 2023 it predicts less than 290,000 deaths whereas in 2022 we observed over 330,000 deaths. Further, when we look at @fig-prediction, we see again see a similar extension by the model in a linear fashion. It predicts the deaths for each cause to increase in the next years, which is almost certainly an accurate prediction, however in a completely linear way. Naturally, this is reflected in the total deaths and we begin to learn of some of the flaws of this model.
 
 ```{r}
 #| label: fig-total_yearly_death
@@ -249,18 +256,71 @@ future_data |>
   geom_point() +
   labs(x = "Year", y = "Total Deaths", title = "Predicted Annual Deaths in Ontario")
 ```
+Before considering these flaws it is important to note that this model does fit the observed very well. The results of the model show it converges, that is the that values are all one and the as the model increases in sample size, the error will be contained within an interval. Further, using posterior predictive checking [@fig-model-three] and the "Leave-One-Out" re-sampling method (code for the LOO re-sampling method is available on the Github repo at <https://github.com/JfpGilbert0/Ontario-CA-Mortality/tree/main> and was not small enough to be in this paper) on the negative binomial model compared to a Poisson fitted model shows the negative binomial approach to be far more accurate to the data. We can also see through posterior predictive checking and looking at the residuals that there is very little error when using year and cause to predict the number of deaths.
 
-Having seen that model fits very well for the observed data and that in the future it predicts very linear changes, one may conclude that the real predictors are not year and cause of death but rather much more specific and less quantifiable factors. Year and cause fo death are very good predictors when we have the data to match, however we cannot get mortality data for the future and so the model can only replicate trends it has seen in the data from 2000 to 2022. It is replicating the almost linear gradual change in the values of our data we can see in @fig-all_values-2. What the model does nto pick up on well enough is that there is exponential growth of the total deaths per cause, and total deaths in Ontario over the recent past, more specifically since 2017. 
+Having seen that model fits very well for the observed data and that in the future it predicts very linear changes, one may conclude that the real predictors are not year and cause of death but rather much more specific and less quantifiable factors. Year and cause of death are very good predictors when we have the observed data, however we cannot get mortality data for the future and so the model can only replicate trends it has seen in the data from 2000 to 2022. It is replicating the almost linear gradual change in the values of our data we can see in @fig-all_values-2. What the model does not pick up on well enough is that there is exponential growth of the total deaths per cause, and total deaths in Ontario over the recent past, more specifically since 2017. 
+
+The reasons this model is not perfect are many and we can start discussing some of the more obvious ones. First, since 2020 COVID-19 has been prevalent and its effect is not small. In it's first year, it was the fifth ranked leading cause of death in Ontario and in 2022 it became the fourth ranked leading cause. The model predicts these deaths will rise although not enough in the next five years to surpass diseases of the heart at rank three. In the past years, COVID-19 has proved quite sporadic with spikes in summer and new strains always potentially coming. In the future, this model does not account for the effect and nature of COVID-19 and the possibility of it disappearing or becoing more common.
+
+Second, medical intervention and innovation ais always happening and the most money for innovation goes to the leading causes of death. This is obvious because if so many people are dying from malignant neoplasms and diseases of the heart it is only natural that such a large part of the medical industry strives to improve this. The model also does nto account for any kind of medical intervention in the future. It is plausible to assume that there will be significant medical advancements, enough to curb some of the leading causes of death. 
+
+Third, the method od reporting these deaths and the leading cause of death is always improving and changing. 20 years ago, we may not have recorded all the deaths as accurately as we would today. Perhaps someone who died of a certain disease was placed into the 'other causes' category when today they could have been placed in 'malignant neoplasms' because of the advancements of the medical industry. 
+
+Lastly, this model is not a perfect reflection of the future because over the 20 years, the trends are more linear than anything else. We have seen, especially in @fig-prediction that our model extends the data in a very linear fashion, and it does line up with the general data. However, we can see from 2017 to 2022 some causes have taken a more exponential growth, particularly 'other causes of death' and 'accidental deaths.' If the model had been more specific in targeting theses trends, perhaps we would see a graph that flows better, however there are things we can still learn from this model. We learned that although this model takes into account 23 years of mortality data, it is the past few years since 2017 that seem to reflect the trend we should expect. We also learned that even with any kind of exponential growth or linear growth, the top three causes of death will remain the top three causes of death for the next five years. The gap from the top three to next seven causes is more than double the number of deaths of the fourth ranked leading cause of death. 
+
+In conclusion, we produced a model to predict the leading causes of death over the next five years, and what we have learned is that there has to be many more factors involved. Simply the year and leading cause of death is not enough to accurately predict the next five years, let alone the smaller trends in the 4th through 10th leading causes of death. We can howveer, learn from the model and reinforce that the top three leading causes of death today, will remain so in the future as their gap is so large to the causes below. These three causes are malignant neoplasms, diseases of the hearts, and other causes of death not listed in the current top 43 causes of death in Ontario. It is important we take into account modern advancements and data reporting differences from twenty years ago. The method of reporting and medical innovations are probably the most effective factors in predicting the number of deaths. Despite the obvious errors visible in the prediction of the next five years, the model is shown to have fit the observed data very well.  
 
 # Appendix
 
-## Additional data details
-
-## Model details {#sec-model-details}
+## More on the Model
+In this section I will show that we created two models, on ewith a negative binomial distribution and one with a poisson distribution. The negative binomial fits very well as can be seen in the posterior predictive and residuals graphs [@fig-model-two]. We also checked the robustness of the models by comparing them in a 'Leave-One-Out' test.
 
 ```{r}
 #| label: fig-model-one
-#| fig-cap: "Residuals plotted displaying a normal-like distribution and graph of the posterior predection check."
+#| fig-cap: "Summary of the negative binomal fitted model."
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+
+summary(cause_of_death_ontario_neg_binomial)
+```
+
+
+```{r}
+#| label: fig-model-two
+#| fig-cap: "Residuals of the negative binomial distribution are plottedon the left. Residuals of the poisson fitted distribution are plottedon the right."
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| layout-ncol: 2
+
+
+ggplot(residuals_df, aes(x = residuals)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  theme_minimal() +
+  labs(title = "Histogram of Residuals", x = "Residuals", y = "Count")
+
+#Can compare to fitting this data with a Poisson distribution 
+cause_of_death_ontario_poisson <-
+  stan_glm(
+    total_deaths ~ cause,
+    data = joint_data,
+    family = poisson(link = "log"),
+    seed = 853
+  )
+
+residuals_df <- data.frame(residuals = residuals(cause_of_death_ontario_poisson))
+ggplot(residuals_df, aes(x = residuals)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  theme_minimal() +
+  labs(title = "Histogram of Residuals", x = "Residuals", y = "Count")
+
+```
+```{r}
+#| label: fig-model-three
+#| fig-cap: "Posterior prediction check for the negative binomial (left) and poisson (right) models."
 #| eval: true
 #| echo: false
 #| message: false
@@ -268,18 +328,14 @@ Having seen that model fits very well for the observed data and that in the futu
 #| layout-ncol: 2
 
 pp_check(cause_of_death_ontario_neg_binomial)
-
-residuals_df <- data.frame(residuals = residuals(cause_of_death_ontario_neg_binomial))
-ggplot(residuals_df, aes(x = residuals)) +
-  geom_histogram(bins = 30, fill = "blue", color = "black") +
-  theme_minimal() +
-  labs(title = "Histogram of Residuals", x = "Residuals", y = "Count")
+pp_check(cause_of_death_ontario_poisson)
 
 ```
 
+Lastly, we can see using the posterior predictive checking [@fig-model-three] and the Leave-One-Out re-sampling method that the negative binomial distribution fits the observed data much better than a poisson distribution. (The LOO sampling method code is available on the Github repo available at <https://github.com/JfpGilbert0/Ontario-CA-Mortality/tree/main>)
 
-## Posterior predictive check
 
+\newpage
 # References
 
 

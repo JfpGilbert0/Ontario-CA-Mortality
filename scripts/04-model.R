@@ -15,31 +15,7 @@ library(modelsummary)
 library(shinystan)
 
 #### Read data ####
-analysis_data <- read_csv("data/analysis_data/analysis_data.csv")
-
-joint_data |> 
-  mutate(cause = str_remove(cause, "\\s*\\[.*\\]")) |>
-  ggplot(aes(x = year, y = value)) +
-  geom_point(aes(color = cause), alpha = 0.8) +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-#  facet_wrap(vars(cause), dir = "v", ncol = 3) +
-
-joint_data |>
-  mutate(cause = str_remove(cause, "\\s*\\[.*\\]")) |>
-  ggplot(aes(x = cause, y = value)) +
-  geom_point(aes(color = year), alpha = 0.6) +
-  theme_minimal() +
-  theme(legend.position = "bottom", axis.text.x = element_text(angle=90, hjust=1)) +
-  labs()
-
-joint_data |>
-  mutate(cause = str_remove(cause, "\\s*\\[.*\\]")) |>
-  summarise(avg_rank = mean(year_rank),
-            number_years_present = n(),
-            .by = cause) |>
-  arrange(avg_rank) |>
-  mutate()
+joint_data <- read_csv("data/analysis_data/joint_data.csv")
 
 ### Model data ####
 cause_of_death_ontario_neg_binomial <-
@@ -140,20 +116,13 @@ ggplot(residuals_df, aes(x = residuals)) +
 saveRDS(cause_of_death_ontario_neg_binomial, file = "models/cod_ontario_neg_binomial_two.rds")
 
 
-max(joint_data$total_deaths)
 
 
 
-joint_data |>
-  summarise(
-    min = min(value),
-    mean = mean(value),
-    max = max(value),
-    sd = sd(value),
-    var = sd^2,
-    n = n()
-    )
-
-joint_data |>
-  filter(cause == "Accidents (unintentional injuries) [V01-X59, Y85-Y86]") |>
-  arrange(-value)
+combined_future_data |>
+  mutate(cause = str_remove(cause, "\\s*\\[.*\\]")) |>
+  ggplot(aes(x = year, y = value)) +
+  geom_point(aes(color = cause), alpha = 0.8) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = "Year", y = "Total Deaths")
