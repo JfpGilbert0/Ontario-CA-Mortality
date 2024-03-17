@@ -1,13 +1,12 @@
 ---
-title: "My title"
-subtitle: "My subtitle if needed"
+title: "Trends in Top 10 Causes of Death in Ontario"
 author: 
   - Jacob Gilbert
   - Liam Wall
 thanks: "Code and data are available at: https://github.com/JfpGilbert0/Ontario-CA-Mortality."
 date: today
 date-format: long
-abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
+abstract: "Ontario, Canada, mortality data has been available on the internet for years and we have utilised data from 2000 to 2022 to predict the leading causes of death in 2023 to 2028. We examine the top ten leading causes of death and observe the trend in them over 23 years and train a model to use cause of death and the year as predictors for the number of yearly deaths for that cause. We find that year and cause prove to be very good predictors of total death for the years 2000 to 2022 and extends the trends observed into the future until 2028. However, this model does not take into account many of the external factors in medicine and society that are the true causes of these trends, and so we expect that this model explains the future of Ontario mortality if no intervention is made."
 format: pdf
 number-sections: true
 bibliography: references.bib
@@ -23,12 +22,16 @@ library(palmerpenguins)
 library(arrow)
 library(downloader)
 library(rstanarm)
+library(kableExtra)
 ```
 
 
 # Introduction
+In this paper, we attempt to analyze data on Ontario mortality from 2000 to 2022. In the analysis we create a model predicting the number of deaths per year for a certain cause. From this model we were able to create a prediction for the next five years of the top ten causes of death in Ontario and the corresponding predicted number of deaths. 
+
 
 # Data
+The data is this paper was retrieved from [UPDATE WEBSITE]. The data set contains information on Ontario residents' mortality from 2000 to 2022. The data set lists information on the top 43 leading causes of death each year. It has values for rank of leading cause of death in Ontario, total number of deaths per cause, percentage of deaths pertaining to each cause compared to the yearly total, and age-specific mortality rate. It lists all this information for males, females, and both sexes combined individually as well as for each age group of around 5 years and a combined statistics for all ages. The data set also lists annual information like total deaths per cause per year and total deaths per year. For the purposes of our analysis we will only look at the top ten causes of death in Ontario per year [@fig-all_values].
 
 ```{r}
 #| label: fig-all_values
@@ -53,18 +56,96 @@ cleaned_data |>
   theme(legend.position = "none") +
   labs(x = "Year", y = "Total Deaths", title = "Top 43 Causes of Death in Ontario")
 
-joint_data |>
+joint_data |> 
+  mutate(cause = str_remove(cause, "\\s*\\[.*\\]")) |>
   ggplot(aes(x = year, y = value)) +
-  geom_point(aes(color = cause), alpha = 0.5) +
+  geom_point(aes(color = cause), alpha = 0.8) +
+  theme_minimal() +
   theme(legend.position = "bottom") +
   labs(x = "Year", y = "Total Deaths", title = "Top 10 Causes of Death in Ontario")
 
 ```
 
 
+For this research we look at the data pertaining to both sexes and all age groups, which are the cumulative results from the individual information from male and female and from all the age groups combined. The purpose of this paper is not to define age specific or gender specific trends in the mortality of Ontario residents, but rather the overall trend of the leading causes of death and predictions for the future. In this way way we can use the combined data from these groups and still achieve meaningful results in our analysis [@tbl-header-1]. 
+
+The original data set from STAT.CANADA.CA contains 407,334 observations of 18 different variables. In our analysis, using the combined data of gender and age, we look at 230 observations of 5 variables: year, cause, total deaths per cause, yearly rank of leading cause of death, and total deaths that year. There are 230 observations for the top ten causes of death over 23 years, 2000 to 2022. In the 23 years, there has only been 13 different causes ranked as the top ten leading causes of death [@tbl-header-2]. The yearly deaths for each of the top ten causes range from 3,606 to 82,822. The annual deaths in Ontario from 2000 to 2022 range from 218,062 to 334081.
+
+```{r}
+#| label: tbl-header
+#| tbl-cap: "Visual of the original dataset and the top 13 leading causes of death from 2000 to 2022."
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| layout-nrow: 2
+
+joint_data |>
+  head() |>
+  kable(col.names = c("Year", "Leading Cause of Death", "Deaths", "Rank", "Total Annual Deaths"))
+
+joint_data |>
+  mutate(cause = str_remove(cause, "\\s*\\[.*\\]")) |> 
+  count(cause) |> arrange(n) |> kable(col.names = c("Leading Causes of Death", n = "Fequency"))
+```
+
+# Model
+The model used to simulate, analyse, and predict the next five years of mortality data for the top ten causes of death in Ontario was produced using the rstanarm package and the stan_glm function. Taking advice from [INSERT ROHAN TEXTBOOK REFERENCE OF CHAPTER 13 ALBERTA DATA] we set out to fit our data to a negative binomial distribution. [INSERT FORMULA FOR NEGATIVE BINOMIAL PMF]. We regressed total deaths for each cause against cause of death dependent on the year. We used the negative binomial distribution because our data has a variance far exceeding the mean. [@tbl-min-max]. We also specify a log link function because as we are dealing with number of deaths, any negative value as a result of the model will not be telling of the real world. In this way using the log link function the predictions are always positive.
+
+```{r}
+#| label: tbl-min-max
+#| tbl-cap: "Summary statistics of the number of yearly deaths, by cause, in Ontario, Canada."
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+
+joint_data |>
+  summarise(
+    min = min(value),
+    mean = mean(value),
+    max = max(value),
+    sd = sd(value),
+    var = sd^2,
+    n = n()
+    ) |>
+  kable(col.names = c("Min", "Mean", "Max", "SD", "Var", "N"))
+```
+
+
+The model we built is very well fitting to a negative binomial distribution as shown in @tbl-model-summary. We can also look at the residuals of the observed data compared to that which was predicted by our model. We can see this distribution is very normal looking with a clear mean of 0. The outcome of this model is discussed further in the discussion and results sections. 
+
+```{r}
+#| label: fig-model-summary
+#| fig-cap: "Modeling the most prevalent cause of deaths in Ontario, 200-2022."
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| layout-ncol: 2
+
+cause_of_death_ontario_neg_binomial <- readRDS("/Users/liamwall/Ontario-CA-Mortality/models/cod_ontario_neg_binomial_two.rds")
+  
+
+pp_check(cause_of_death_ontario_neg_binomial)
+
+residuals_df <- data.frame(residuals = residuals(cause_of_death_ontario_neg_binomial))
+ggplot(residuals_df, aes(x = residuals)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  theme_minimal() +
+  labs(title = "Histogram of Residuals", x = "Residuals", y = "Count")
+
+```
+
+
+# Results
+From the analysis of the mortality data in Ontario of this century, we can see that there are three longstanding leading causes of death whereas the third through tenth leading causes of death are relatively similar and do not undergo large changes relative to total deaths per year in Ontario. We can see that in 2017 diseases of the heart was surpassed by other causes of death for the number two ranking of leading cause of death. Besides that there has been no change of rank for the top three causes of death since 2000 and malignant neoplasms has remained at rank number one [@fig-top_three_bottom_seven-1]. As for the fourth through tenth leading causes, there has been many changes in rank however the amount of deaths for each of these causes does not 20,000, and rarely surpasses 15,000. In this way a small change in the amount of deaths per cause could lead to a change of rank much easier than in the case of the top three leading causes. 
+
+In the case of the fourth through tenth leading causes, there is one outlier that has been trending upwardly in recent years: accidents and unintentional injuries. We can see this as the orange points in @fig-top_three_bottom_seven-2. In 2000 this was ranked sixth with only 8,589 deaths to rank four in 2021 with 19,257 deaths.
+
 ```{r}
 #| label: fig-top_three_bottom_seven
-#| fig-cap: "Visual of the trends in top three causes versus the bottom seven."
+#| fig-cap: "Visual of the trends in total deaths from the top three causes versus the next seven."
 #| eval: true
 #| echo: false
 #| message: false
@@ -89,8 +170,52 @@ joint_data |>
 
 ```
 
+Using the model we built, having regressed cause and year together to predict the total number of deaths per cause each year, we can use the posterior predictors to predict value for the future. We did this for the next 5 years after 2022. We can see the visual extension of the predicted data with the observed data from 200 to 2022. In @fig-prediction we can see the predicted values on the right.
 
-# Results
+```{r}
+#| label: fig-prediction
+#| fig-cap: "A visual extension of the observed data with predictions from the neagtive binomial model from 2023 to 2028."
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+
+recent_causes <- joint_data |>
+  filter(year == 2022)
+unique_causes <- distinct(recent_causes, cause)
+
+future_years <- rep(2023:2028, each = 10)
+future_years <- data.frame(year = 2023:2028)
+
+future_data <- expand.grid(year = future_years$year, cause = unique_causes$cause) |>
+  arrange(year)
+
+predicted_counts <- posterior_predict(cause_of_death_ontario_neg_binomial, newdata = future_data)
+mean_predicted_counts <- apply(predicted_counts, 2, mean)
+future_data$predicted_counts <- mean_predicted_counts
+
+colnames(future_data)[3] <- "value"
+
+data_to_combine <- joint_data |>
+  select(-year_rank) |>
+  select(-total_deaths)
+
+combined_future_data <- rbind(data_to_combine, future_data)
+
+combined_future_data |>
+  mutate(cause = str_remove(cause, "\\s*\\[.*\\]")) |>
+  ggplot(aes(x = year, y = value)) +
+  geom_point(aes(color = cause), alpha = 0.8) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+```
+
+
+
+# Discussion
+
+We can see in @fig-total_yearly_death the total deaths in Ontario have increased greatly, and in recent years has had a somewhat exponential increase. Our model continues this trend and we can see the deaths continue to rise in [INSERT FIG HERE FOR FUTURE TOTAL DEATHS], however, it seems that our model is mistaken in that in 2023 it predicts less than 290,000 deaths whereas in 2022 we observed over 330,000 deaths. Further, when we look at @fig-prediction, we see again see a similar extension by the model in a linear fashion. It predicts the death for each cause to increase in the next years, which is most likely accurate, however in a completely linear way. Naturally this is reflected in the total deaths and we begin to learn of some of the flaws of this model.
 
 ```{r}
 #| label: fig-total_yearly_death
@@ -99,6 +224,7 @@ joint_data |>
 #| echo: false
 #| message: false
 #| warning: false
+#| layout-ncol: 2
 
 
 #Total annual death data for both sexes and all causes
@@ -115,9 +241,16 @@ total_yearly_death_data <- cleaned_data |>
 
 
 total_yearly_death_data
+
+
+future_data |>
+  summarise(total = sum(value), .by = year) |>
+  ggplot(aes(x = year, y = total)) +
+  geom_point() +
+  labs(x = "Year", y = "Total Deaths", title = "Predicted Annual Deaths in Ontario")
 ```
 
-# Discussion
+Having seen that model fits very well for the observed data and that in the future it predicts very linear changes, one may conclude that the real predictors are not year and cause of death but rather much more specific and less quantifiable factors. Year and cause fo death are very good predictors when we have the data to match, however we cannot get mortality data for the future and so the model can only replicate trends it has seen in the data from 2000 to 2022. It is replicating the almost linear gradual change in the values of our data we can see in @fig-all_values-2. What the model does nto pick up on well enough is that there is exponential growth of the total deaths per cause, and total deaths in Ontario over the recent past, more specifically since 2017. 
 
 # Appendix
 
@@ -127,25 +260,20 @@ total_yearly_death_data
 
 ```{r}
 #| label: fig-model-one
-#| fig-cap: "Model regressing total deaths based on year."
+#| fig-cap: "Residuals plotted displaying a normal-like distribution and graph of the posterior predection check."
 #| eval: true
 #| echo: false
 #| message: false
 #| warning: false
 #| layout-ncol: 2
 
-# could also add a predictor which would be year or year_rank
-cause_of_death_ontario_neg_binomial <-
-  stan_glm(
-    value ~ cause,
-    data = joint_data,
-    family = neg_binomial_2(link = "log"),
-    seed = 853
-  )
-
-summary(cause_of_death_ontario_neg_binomial)
-
 pp_check(cause_of_death_ontario_neg_binomial)
+
+residuals_df <- data.frame(residuals = residuals(cause_of_death_ontario_neg_binomial))
+ggplot(residuals_df, aes(x = residuals)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  theme_minimal() +
+  labs(title = "Histogram of Residuals", x = "Residuals", y = "Count")
 
 ```
 
